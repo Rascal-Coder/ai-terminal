@@ -2,14 +2,14 @@
 import { exec as execCb, spawn } from "child_process";
 import { promisify } from "util";
 import os from "node:os";
-import { colorize } from "@/utils";
+import { colorize, getOllamaDownloadUrl, getOllamaPort } from "@/utils";
 import { confirm } from "@clack/prompts";
 const exec = promisify(execCb);
-
+const platform: NodeJS.Platform = os.platform();
 const isOllamaAvailable = async (): Promise<boolean> => {
   try {
     const { stdout } = await exec("ollama --version");
-    console.log(colorize(`${stdout.trim()}`, "cyan"));
+    console.log(`${stdout.trim()}`);
     return true;
   } catch (error) {
     if (error instanceof Error) {
@@ -25,28 +25,19 @@ const isOllamaAvailable = async (): Promise<boolean> => {
   }
 };
 
-const startOllamaServe = async (): Promise<void> => {
-  const ollamaProcess = spawn("ollama", ["serve"]);
-
-  ollamaProcess.stderr.on("data", (data) => {
-    const output = data.toString();
-    if (output.includes("Listening on")) {
-      console.log(
-        colorize(
-          "Ollama has been successfully started and is listening.",
-          "green"
-        )
-      );
+const isOllamaServeRunning = async (): Promise<boolean> => {
+  try {
+    if (platform === "win32") {
+      const { stdout } = await exec("tasklist");
+      return stdout.toLowerCase().includes("ollama.exe");
+    } else {
+      const { stdout } = await exec("pgrep -f 'ollama serve'");
+      return stdout.trim().length > 0;
     }
-  });
-
-  ollamaProcess.on("close", (code) => {
-    console.log(
-      colorize(`ollama serve process exited with code ${code}`, "red")
-    );
-  });
+  } catch (error) {
+    return false;
+  }
 };
-const platform: NodeJS.Platform = os.platform();
 
 // Example usage:
 const main = async () => {
@@ -54,8 +45,17 @@ const main = async () => {
   const available = await isOllamaAvailable();
   if (available) {
     console.log(colorize("Ollama is available.", "green"));
-    console.log(colorize("Starting ollama serve...", "green"));
-    await startOllamaServe();
+    const running = await isOllamaServeRunning();
+    if (!running) {
+      console.log(colorize("Starting ollama serve...", "green"));
+      spawn("node", ["dist/startOllamaServe.js"], {
+        detached: true,
+        stdio: "ignore",
+      }).unref();
+
+    } else {
+      console.log(colorize("Ollama is already running.", "green"));
+    }
   } else {
     console.log(colorize("Ollama is not available.", "red"));
     console.log(colorize("ai-terminal need ollama serve", "yellow"));
@@ -82,18 +82,6 @@ function openBrowser(url: string): void {
     spawn("cmd", ["/c", "start", url], { detached: true });
   } else if (platform === "darwin") {
     spawn("open", [url], { detached: true });
-  }
-}
-
-function getOllamaDownloadUrl(): string | null {
-  let url: string;
-  if (platform === "win32") {
-    return (url = "https://ollama.com/download/OllamaSetup.exe");
-  } else if (platform === "darwin") {
-    return (url = "https://ollama.com/download/Ollama-darwin.zip");
-  } else {
-    console.error(colorize("Unsupported platform:", "red"), platform);
-    return null;
   }
 }
 
