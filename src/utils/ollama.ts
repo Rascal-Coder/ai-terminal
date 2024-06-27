@@ -103,7 +103,7 @@ const isOllamaServeRunning = async (): Promise<boolean> => {
 };
 
 export const initOllama = async () => {
-  const initSpinner = oraSpinner();
+  const initSpinner = oraSpinner("Check Ollama available...");
 
   initSpinner.start("Check Ollama available...");
   const available = await isOllamaAvailable();
@@ -121,7 +121,10 @@ export const initOllama = async () => {
       });
       const OLLAMA_SERVE_ENDPOINT = await getOllamaServeEndpoint();
       console.log(
-        colorize(`\n🚀 ~ OllamaServeEndpoint at ${OLLAMA_SERVE_ENDPOINT}`, "cyan")
+        colorize(
+          `\n🚀 ~ OllamaServeEndpoint at ${OLLAMA_SERVE_ENDPOINT}`,
+          "cyan"
+        )
       );
       initSpinner.succeed("Success init ollama !");
       ollamaProcessHelper.unref();

@@ -7,10 +7,12 @@ import ora from "ora";
  * @returns  - 返回一个 ora spinner 实例
  */
 export const oraSpinner = (
+  msg: string = "Loading...",
   spinnerStr: SpinnerName = "dots"
 ) => {
   const cliSpinners = Spinner[spinnerStr];
   const oraSpinnerInstance = ora({
+    text: msg,
     spinner: cliSpinners,
     hideCursor: false,
   });
