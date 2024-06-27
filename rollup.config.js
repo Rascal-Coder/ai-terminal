@@ -8,7 +8,7 @@ import del from 'rollup-plugin-delete';
 const production = !process.env.ROLLUP_WATCH;
 
 export default {
-  input: ['src/index.ts','src/startOllamaServe.ts'],
+  input: ['src/index.ts', 'src/startOllamaServe.ts'],
   output: {
     dir: 'dist', // 输出目录
     format: 'esm',
@@ -22,5 +22,5 @@ export default {
     json(),
     terser(),
   ],
-  external: ['child_process', 'os'],
+  external: ['child_process', 'os', 'util', '@clack/prompts', 'ora']
 };
