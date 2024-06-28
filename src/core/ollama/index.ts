@@ -1,14 +1,10 @@
-import os from "node:os";
-import { colorize } from "./color";
 import { exec } from "child_process";
 import { promisify } from "util";
 import { confirm } from "@clack/prompts";
 import { spawn } from "child_process";
-import { openBrowser } from "./common";
-import { oraSpinner } from "./spinner";
-
+import { openBrowser, currentPlatform, oraSpinner, log } from "@/utils";
+import { initConfig, setConfig } from "@/core/config";
 const execPromise = promisify(exec);
-const platform: NodeJS.Platform = os.platform();
 const downloadUrlMap: Record<string, string> = {
   win32: "https://ollama.com/download/OllamaSetup.exe",
   darwin: "https://ollama.com/download/Ollama-darwin.zip",
@@ -17,28 +13,28 @@ const downloadUrlMap: Record<string, string> = {
 const allowedPlatforms = Object.keys(downloadUrlMap);
 
 const getOllamaDownloadUrl = (): string | null => {
-  if (allowedPlatforms.includes(platform)) {
-    return downloadUrlMap[platform];
+  if (allowedPlatforms.includes(currentPlatform())) {
+    return downloadUrlMap[currentPlatform()];
   } else {
-    console.error(colorize("Unsupported platform:", "red"), platform);
+    log.error(`Unsupported platform: ${currentPlatform()}`);
     return null;
   }
 };
 
-const getOllamaServeEndpoint = async (): Promise<string | null> => {
+export const getOllamaServeEndpoint = async (): Promise<string | null> => {
   try {
     let pidCommand = "";
     let portCommand = "";
 
     // 根据操作系统选择适当的命令
-    if (process.platform === "win32") {
+    if (currentPlatform() === "win32") {
       pidCommand = 'tasklist /fi "imagename eq ollama.exe" /fo csv /nh';
       portCommand = "netstat -ano | findstr LISTENING | findstr ";
-    } else if (process.platform === "darwin") {
+    } else if (currentPlatform() === "darwin") {
       pidCommand = 'pgrep -f "ollama serve"';
       portCommand = "lsof -i -P -n | grep LISTEN | grep ";
     } else {
-      console.error("Unsupported platform:", process.platform);
+      log.error(`Unsupported platform: ${currentPlatform()}`);
       return null;
     }
 
@@ -50,39 +46,35 @@ const getOllamaServeEndpoint = async (): Promise<string | null> => {
     }
     const pid = pidMatch[0];
 
-    // 查询该 PID 对应的端口号
+    // 查询该 PID 对应的IP地址和端口
     const { stdout } = await execPromise(`${portCommand}${pid}`);
     const stdoutInput = stdout.trim().match(/\d+$/)?.input;
 
     if (stdoutInput) {
-      const ipEndpoint = stdoutInput.match(
-        /\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}:\d{1,5}\b/
-      );
+      const ipReg = /\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}:\d{1,5}\b/;
+      const ipEndpoint = stdoutInput.match(ipReg);
       const ollamaServeEndpoint = `http://${ipEndpoint}`;
       return ollamaServeEndpoint;
     } else {
       return null;
     }
   } catch (error) {
-    console.error("Error retrieving ollama serve:", error);
+    log.error(`Retrieving ollama serve: ${error}`);
     return null;
   }
 };
 
 const isOllamaAvailable = async (): Promise<boolean> => {
   try {
-    const { stdout } = await execPromise("ollama --version");
-    console.log(colorize(`\n${stdout.trim()}`, "bgCyan"));
+    await execPromise("ollama --version")
+    // const { stdout } = await execPromise("ollama --version");
+    // log.info(`\n${stdout.trim()}`);
     return true;
   } catch (error) {
     if (error instanceof Error) {
-      console.error(
-        colorize(`ollama is not available: ${error.message}`, "red")
-      );
+      log.error(`Ollama is not available: ${error.message}`);
     } else {
-      console.error(
-        colorize("Unknown error checking ollama availability", "red")
-      );
+      log.error("Unknown error checking ollama availability");
     }
     return false;
   }
@@ -90,7 +82,7 @@ const isOllamaAvailable = async (): Promise<boolean> => {
 
 const isOllamaServeRunning = async (): Promise<boolean> => {
   try {
-    if (platform === "win32") {
+    if (currentPlatform() === "win32") {
       const { stdout } = await execPromise("tasklist");
       return stdout.toLowerCase().includes("ollama.exe");
     } else {
@@ -103,36 +95,23 @@ const isOllamaServeRunning = async (): Promise<boolean> => {
 };
 
 export const initOllama = async () => {
-  const initSpinner = oraSpinner("Check Ollama available...");
-
+  const initSpinner = oraSpinner();
   initSpinner.start("Check Ollama available...");
   const available = await isOllamaAvailable();
-
   if (available) {
-    // console.log(colorize("Ollama is available.", "green"));
     initSpinner.succeed("Ollama is available.");
     const running = await isOllamaServeRunning();
     if (!running) {
-      // console.log(colorize("Starting ollama serve...", "green"));
       initSpinner.start("Starting ollama serve...");
       const ollamaProcessHelper = spawn("node", ["dist/startOllamaServe.js"], {
         detached: true,
         stdio: "ignore",
       });
-      const OLLAMA_SERVE_ENDPOINT = await getOllamaServeEndpoint();
-      console.log(
-        colorize(
-          `\n🚀 ~ OllamaServeEndpoint at ${OLLAMA_SERVE_ENDPOINT}`,
-          "cyan"
-        )
-      );
-      initSpinner.succeed("Success init ollama !");
+      autoSetOllamaEndpoint();
+      initSpinner.succeed("Success init ollama");
       ollamaProcessHelper.unref();
     } else {
-      const OLLAMA_SERVE_ENDPOINT = await getOllamaServeEndpoint();
-      console.log(
-        colorize(`🚀 ~ OllamaServeEndpoint at ${OLLAMA_SERVE_ENDPOINT}`, "cyan")
-      );
+      autoSetOllamaEndpoint();
       initSpinner.succeed("Ollama is already running.");
     }
   } else {
@@ -146,10 +125,20 @@ export const initOllama = async () => {
       const url = getOllamaDownloadUrl();
       if (url) {
         openBrowser(url);
+        log.warning("Please download the installer and run it.");
+        log.warning("After installation, set the configuration manually.");
       }
     } else {
-      console.log(colorize("\nBye!", "red"));
+      log.error("\nBye!");
       process.exit();
     }
+  }
+};
+
+const autoSetOllamaEndpoint = async () => {
+  const OLLAMA_SERVE_ENDPOINT = await getOllamaServeEndpoint();
+  initConfig();
+  if (OLLAMA_SERVE_ENDPOINT) {
+    setConfig("END_POINT", OLLAMA_SERVE_ENDPOINT, true);
   }
 };
