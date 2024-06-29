@@ -16,3 +16,12 @@ export const openBrowser = (url: string): void => {
     spawn("open", [url], { detached: true });
   }
 };
+
+export async function validateFileName(componentName: string): Promise<void> {
+  // 验证文件名是否合法
+  if (!/^[a-zA-Z0-9-_]+$/.test(componentName)) {
+    throw new Error(
+      'Invalid component name. Only alphanumeric characters, dashes, and underscores are allowed.',
+    );
+  }
+}

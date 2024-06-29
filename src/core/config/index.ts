@@ -20,8 +20,8 @@ async function ensureConfigFileExists(once: boolean = false): Promise<void> {
         "Config file does not exist. Creating a default config file."
       );
     const defaultConfig: ConfigItem = {
-      END_POINT: "",
-      USE_OLLAMA_MODEL: "",
+      OLLAMA_HOST: 'http://127.0.0.1:11434',
+      OLLAMA_MODEL: "",
     };
     try {
       await fs.writeFile(
@@ -39,7 +39,6 @@ async function ensureConfigFileExists(once: boolean = false): Promise<void> {
 }
 
 async function readConfigFile(configFilePath: string): Promise<ConfigItem> {
-  // const configFilePath = getConfigFilePath();
   const fileContent = await fs.readFile(configFilePath, "utf8");
   return JSON.parse(fileContent) as ConfigItem;
 }
@@ -53,7 +52,7 @@ export async function setConfig(
   const configFilePath = getConfigFilePath();
   try {
     const config = await readConfigFile(configFilePath);
-    if (!config[key]) {
+    if (!Object.keys(config).includes(key)) {
       log.bgerror(`Config key does not exist: ${key}`);
     } else {
       config[key] = value;
@@ -64,7 +63,7 @@ export async function setConfig(
     log.error(`Error reading config file: ${error}`);
   }
 }
-export async function getConfig(key: keyof ConfigItem): Promise<void> {
+export async function getConfig(key: keyof ConfigItem): Promise<string | null> {
   await ensureConfigFileExists();
 
   const configFilePath = getConfigFilePath();
@@ -72,11 +71,14 @@ export async function getConfig(key: keyof ConfigItem): Promise<void> {
     const config = await readConfigFile(configFilePath);
     if (Object.keys(config).includes(key)) {
       log.bgsuccess(`Config get: ${key} = ${config[key]}`);
+      return config[key];
     } else {
       log.bgerror(`Config key not found: ${key}`);
+      return null
     }
   } catch (error) {
     log.error(`Error reading config file: ${error}`);
+    return null
   }
 }
 

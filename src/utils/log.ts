@@ -8,7 +8,7 @@ const bgerror = chalk.bold.bgRed;
 const bgwarn = chalk.bold.bgHex('#FFA500');
 const bginfo = chalk.bold.bgBlue;
 const bgsuccess = chalk.bold.bgGreen;
-
+const underline=chalk.blue.underline.bold
 export const log = {
   error: (message: string) => {
     console.log(error(`${message}`));
@@ -33,5 +33,11 @@ export const log = {
   },
   bgsuccess: (message: string) => {
     console.log(bgsuccess(`${message}`));
+  },
+  underline: (message: string) => {
+    console.log(underline(`${message}`));
+  },
+  infoWithUnderline: (message: string,underlineMsg:string) => {
+    console.log(`${info(message)} \ ${underline(underlineMsg)}`)
   },
 };

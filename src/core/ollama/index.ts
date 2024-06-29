@@ -21,7 +21,7 @@ const getOllamaDownloadUrl = (): string | null => {
   }
 };
 
-export const getOllamaServeEndpoint = async (): Promise<string | null> => {
+export const getOllamaServeHost = async (): Promise<string | null> => {
   try {
     let pidCommand = "";
     let portCommand = "";
@@ -51,9 +51,9 @@ export const getOllamaServeEndpoint = async (): Promise<string | null> => {
     const stdoutInput = stdout.trim().match(/\d+$/)?.input;
 
     if (stdoutInput) {
-      const ipReg = /\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}:\d{1,5}\b/;
-      const ipEndpoint = stdoutInput.match(ipReg);
-      const ollamaServeEndpoint = `http://${ipEndpoint}`;
+      const hostReg = /\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}:\d{1,5}\b/;
+      const ipHost = stdoutInput.match(hostReg);
+      const ollamaServeEndpoint = `http://${ipHost}`;
       return ollamaServeEndpoint;
     } else {
       return null;
@@ -66,7 +66,7 @@ export const getOllamaServeEndpoint = async (): Promise<string | null> => {
 
 const isOllamaAvailable = async (): Promise<boolean> => {
   try {
-    await execPromise("ollama --version")
+    await execPromise("ollama --version");
     // const { stdout } = await execPromise("ollama --version");
     // log.info(`\n${stdout.trim()}`);
     return true;
@@ -94,51 +94,71 @@ const isOllamaServeRunning = async (): Promise<boolean> => {
   }
 };
 
+
+const autoSetOllamaHost = async () => {
+  const OLLAMA_SERVE_ENDPOINT = await getOllamaServeHost();
+  await initConfig();
+  if (OLLAMA_SERVE_ENDPOINT) {
+    await setConfig("OLLAMA_HOST", OLLAMA_SERVE_ENDPOINT, true);
+  }
+};
+/**
+ * 初始化 Ollama 服务。
+ * 检查 Ollama 是否可用，如果不可用，询问用户是否下载 Ollama。
+ * 如果 Ollama 可用但未运行，则启动 Ollama 服务。
+ */
 export const initOllama = async () => {
+  // 初始化一个 spinner 来显示进度
   const initSpinner = oraSpinner();
   initSpinner.start("Check Ollama available...");
+
+  // 检查 Ollama 是否可用
   const available = await isOllamaAvailable();
   if (available) {
     initSpinner.succeed("Ollama is available.");
+    // 检查 Ollama 服务是否正在运行
     const running = await isOllamaServeRunning();
     if (!running) {
+      // 如果 Ollama 服务没有运行，则启动服务
       initSpinner.start("Starting ollama serve...");
       const ollamaProcessHelper = spawn("node", ["dist/startOllamaServe.js"], {
         detached: true,
         stdio: "ignore",
       });
-      autoSetOllamaEndpoint();
+      // 自动设置 Ollama host
+      autoSetOllamaHost();
       initSpinner.succeed("Success init ollama");
+      // 释放进程引用，允许 Node.js 主进程退出
       ollamaProcessHelper.unref();
     } else {
-      autoSetOllamaEndpoint();
+    // 自动设置 Ollama host
+      autoSetOllamaHost();
       initSpinner.succeed("Ollama is already running.");
     }
   } else {
+    // 如果 Ollama 不可用，则向用户询问是否下载 Ollama
     initSpinner.fail("Ollama is not available.");
     const isDownloadOllama = await confirm({
       message: "Do you want to download ollama?",
       initialValue: true,
     });
-
     if (isDownloadOllama) {
+      // 如果用户同意下载，则提供下载链接并打开浏览器
       const url = getOllamaDownloadUrl();
       if (url) {
         openBrowser(url);
+        // 提示用户完成安装后需要手动设置配置
         log.warning("Please download the installer and run it.");
         log.warning("After installation, set the configuration manually.");
+        log.infoWithUnderline(
+          "Use the command: ras set OLLAMA_HOST",
+          "<your_ollamaServiceHost>"
+        );
       }
     } else {
+      // 如果用户不同意下载，则结束进程
       log.error("\nBye!");
       process.exit();
     }
-  }
-};
-
-const autoSetOllamaEndpoint = async () => {
-  const OLLAMA_SERVE_ENDPOINT = await getOllamaServeEndpoint();
-  initConfig();
-  if (OLLAMA_SERVE_ENDPOINT) {
-    setConfig("END_POINT", OLLAMA_SERVE_ENDPOINT, true);
   }
 };
