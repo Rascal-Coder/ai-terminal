@@ -4,19 +4,20 @@ import type {
   AxiosRequestConfig,
   AxiosResponse,
   InternalAxiosRequestConfig,
-} from "axios";
-import axios from "axios";
-import { log } from "@/utils";
-import { getConfig } from "@/core/config";
+} from 'axios';
+import axios from 'axios';
+
+import { log } from '@/utils';
+import { getConfig } from '@/core/config';
 
 let instance: AxiosInstance;
 
 async function createAxiosInstance(): Promise<AxiosInstance> {
-  const baseURL = (await getConfig("OLLAMA_HOST") as string);
+  const baseURL = (await getConfig('OLLAMA_HOST')) as string;
   instance = axios.create({
     baseURL: baseURL,
     timeout: 60 * 1000,
-    headers: { "Content-Type": "application/json" },
+    headers: { 'Content-Type': 'application/json' },
   });
 
   instance.interceptors.request.use(requestHandler);
@@ -25,7 +26,7 @@ async function createAxiosInstance(): Promise<AxiosInstance> {
   return instance;
 }
 async function requestHandler(
-  config: InternalAxiosRequestConfig
+  config: InternalAxiosRequestConfig,
 ): Promise<InternalAxiosRequestConfig> {
   return config;
 }
@@ -40,27 +41,25 @@ function errorHandler(error: AxiosError): Promise<any> {
 
     switch (status) {
       case 401:
-        log.error("[Error] Unauthorized error: " + statusText);
+        log.error('[Error] Unauthorized error: ' + statusText);
         break;
       case 403:
-        log.warning("[Warn] Forbidden error: " + statusText);
+        log.warning('[Warn] Forbidden error: ' + statusText);
         break;
       case 500:
-        log.bgerror("[Error] Internal server error: " + statusText);
+        log.bgerror('[Error] Internal server error: ' + statusText);
         break;
       default:
-        log.error("[Error]: " + statusText);
+        log.error('[Error]: ' + statusText);
         break;
     }
   } else {
-    log.error("[Error] Network or other error: " + error.message);
+    log.error('[Error] Network or other error: ' + error.message);
   }
   return Promise.reject(error);
 }
 
-async function instancePromise<R = any>(
-  options: AxiosRequestConfig
-): Promise<R> {
+async function instancePromise<R = any>(options: AxiosRequestConfig): Promise<R> {
   if (!instance) {
     await createAxiosInstance();
   }
@@ -80,12 +79,12 @@ async function instancePromise<R = any>(
 export function axiosGet<R = any, T = any>(
   url: string,
   params?: T,
-  config?: AxiosRequestConfig
+  config?: AxiosRequestConfig,
 ): Promise<R> {
   const options: AxiosRequestConfig = {
     url,
     params,
-    method: "GET",
+    method: 'GET',
     ...config,
   };
   return instancePromise<R>(options);
@@ -94,12 +93,12 @@ export function axiosGet<R = any, T = any>(
 export function axiosPost<R = any, T = any>(
   url: string,
   data?: T,
-  config?: AxiosRequestConfig
+  config?: AxiosRequestConfig,
 ): Promise<R> {
   const options: AxiosRequestConfig = {
     url,
     data,
-    method: "POST",
+    method: 'POST',
     ...config,
   };
   return instancePromise<R>(options);

@@ -1,11 +1,14 @@
 #!/usr/bin/env node
-import { Command } from "commander";
-import { initOllama, autoSetOllamaHost, getModel } from "@/core/ollama";
-import { getConfig, setConfig, initConfig } from "@/core/config";
-import { ConfigItem } from "@/types";
-import { log } from "@/utils";
-import packageConfig from "../package.json" assert { type: "json" };
-import generatorHooks from "./core/hooks";
+import { Command } from 'commander';
+
+import packageConfig from '../package.json' assert { type: 'json' };
+
+import generatorHooks from './core/hooks';
+
+import { initOllama, autoSetOllamaHost, getModel } from '@/core/ollama';
+import { getConfig, setConfig, initConfig } from '@/core/config';
+import { ConfigItem } from '@/types';
+import { log } from '@/utils';
 
 const { version } = packageConfig;
 const program = new Command();
@@ -16,20 +19,17 @@ async function main() {
     log.error(`Error reading config file: ${error}`);
     process.exit(1); // 如果无法确保配置文件存在，则退出进程
   }
+  program.name('ai-terminal').description('ai terminal for you').version(version);
   program
-    .name("ai-terminal")
-    .description("ai terminal for you")
-    .version(version);
-  program
-    .command("init")
-    .description("Initialize ai terminal")
+    .command('init')
+    .description('Initialize ai terminal')
     .action(() => {
       initOllama();
     });
 
   program
-    .command("set <key> <value>")
-    .description("Set a global configuration key and value")
+    .command('set <key> <value>')
+    .description('Set a global configuration key and value')
     .action(async (key, value) => {
       try {
         await setConfig(key as keyof ConfigItem, value);
@@ -39,16 +39,16 @@ async function main() {
     });
 
   program
-    .command("hooks <name>")
-    .description("Add a new Hooks")
+    .command('hooks <name>')
+    .description('Add a new Hooks')
     .action(async (name) => {
       log.info(`Adding new Hooks: ${name}`);
       generatorHooks(name);
     });
 
   program
-    .command("get <key>")
-    .description("Get a global configuration value")
+    .command('get <key>')
+    .description('Get a global configuration value')
     .action(async (key) => {
       try {
         await getConfig(key);
@@ -58,8 +58,8 @@ async function main() {
     });
 
   program
-    .command("setHost")
-    .description("Set ollama service host")
+    .command('setHost')
+    .description('Set ollama service host')
     .action(async () => {
       try {
         await autoSetOllamaHost();
@@ -68,15 +68,15 @@ async function main() {
       }
     });
   program
-    .command("setModel")
-    .description("Set ollama service model")
+    .command('setModel')
+    .description('Set ollama service model')
     .action(async () => {
-      console.log("setModel");
+      console.log('setModel');
     });
 
   program
-    .command("list [available]")
-    .description("Show ollama model list")
+    .command('list [available]')
+    .description('Show ollama model list')
     .action(async (argv) => {
       getModel(argv);
     });

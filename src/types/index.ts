@@ -17,6 +17,4 @@ export interface Staged {
   content: string;
 }
 
-export * from "./ollama"
-
-
+export * from './ollama';

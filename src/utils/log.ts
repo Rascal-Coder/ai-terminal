@@ -1,14 +1,14 @@
-import chalk from "chalk";
+import chalk from 'chalk';
 
 const error = chalk.bold.red;
-const warning = chalk.hex("#FFA500");
+const warning = chalk.hex('#FFA500');
 const info = chalk.bold.blue;
 const success = chalk.bold.green;
 const bgerror = chalk.bold.bgRed;
 const bgwarn = chalk.bold.bgHex('#FFA500');
 const bginfo = chalk.bold.bgBlue;
 const bgsuccess = chalk.bold.bgGreen;
-const underline=chalk.blue.underline.bold
+const underline = chalk.blue.underline.bold;
 export const log = {
   error: (message: string) => {
     console.log(error(`${message}`));
@@ -37,7 +37,8 @@ export const log = {
   underline: (message: string) => {
     console.log(underline(`${message}`));
   },
-  infoWithUnderline: (message: string,underlineMsg:string) => {
-    console.log(`${info(message)} \ ${underline(underlineMsg)}`)
+  infoWithUnderline: (message: string, underlineMsg: string) => {
+    // eslint-disable-next-line no-useless-escape
+    console.log(`${info(message)} \ ${underline(underlineMsg)}`);
   },
 };
