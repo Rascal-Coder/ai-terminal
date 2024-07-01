@@ -1,16 +1,21 @@
 #!/usr/bin/env node
 import { Command } from "commander";
-import { initOllama } from "@/core/ollama";
-import { getConfig, setConfig } from "@/core/config";
+import { initOllama, autoSetOllamaHost, getModel } from "@/core/ollama";
+import { getConfig, setConfig, initConfig } from "@/core/config";
 import { ConfigItem } from "@/types";
 import { log } from "@/utils";
 import packageConfig from "../package.json" assert { type: "json" };
 import generatorHooks from "./core/hooks";
-import { execSync } from "child_process";
 
 const { version } = packageConfig;
 const program = new Command();
-function main() {
+async function main() {
+  try {
+    await initConfig();
+  } catch (error) {
+    log.error(`Error reading config file: ${error}`);
+    process.exit(1); // 如果无法确保配置文件存在，则退出进程
+  }
   program
     .name("ai-terminal")
     .description("ai terminal for you")
@@ -52,6 +57,29 @@ function main() {
       }
     });
 
+  program
+    .command("setHost")
+    .description("Set ollama service host")
+    .action(async () => {
+      try {
+        await autoSetOllamaHost();
+      } catch (error) {
+        log.error(`Error setHost: ${error}`);
+      }
+    });
+  program
+    .command("setModel")
+    .description("Set ollama service model")
+    .action(async () => {
+      console.log("setModel");
+    });
+
+  program
+    .command("list [available]")
+    .description("Show ollama model list")
+    .action(async (argv) => {
+      getModel(argv);
+    });
   program.parse(process.argv);
 }
 main();

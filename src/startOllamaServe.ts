@@ -15,7 +15,11 @@ const startOllamaServe = async (): Promise<void> => {
   });
   ollamaProcess.unref();
 };
-
+/**
+ * 获取可执行文件的路径。
+ * @param executable 要查找的可执行文件的名称。
+ * @returns 可执行文件的路径字符串。
+ */
 const getExecutablePath = (executable: string) => {
     let command;
     if (currentPlatform() === 'win32') {

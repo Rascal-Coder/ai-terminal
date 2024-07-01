@@ -13,9 +13,9 @@ import { ollamaChatApi } from "@/utils/service/api";
 interface CodeBlocks {
   [key: string]: string[];
 }
-async function getOpenAIResponse(prompts: string) {
+async function getAIResponse(prompts: string) {
   const data = {
-    model: "deepseek-coder-v2:latest",
+    model: "qwen:4b",
     messages: [
       {
         role: "system",
@@ -32,7 +32,7 @@ async function getOpenAIResponse(prompts: string) {
       temperature: 0.7,
     },
   };
-  const res = await ollamaChatApi<ChatResponse, ChatRequest>(data);
+  const res = await ollamaChatApi(data);
   return res.message.content;
 }
 
@@ -77,7 +77,7 @@ export default async function generatorHooks(fileName: string) {
     const promptsSpinner = spinner();
     promptsSpinner.start("AI is generating hooks for you");
 
-    const completion = await getOpenAIResponse(prompts);
+    const completion = await getAIResponse(prompts);
     const result = parseCompletionToCodeBlocks(completion);
 
     const finalComponentPath = "./src/hooks";

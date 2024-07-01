@@ -22,5 +22,5 @@ export default {
     json(),
     terser(),
   ],
-  external: ["child_process", "os", "util", "@clack/prompts", "ora", "chalk"],
+  external: ["child_process", "os", "util", "@clack/prompts", "ora", "chalk","cherrio"],
 };
