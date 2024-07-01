@@ -2,17 +2,12 @@ import path from 'path';
 import { promises as fs } from 'node:fs';
 import os from 'node:os';
 
-import { getOllamaAllModels } from '../ollama';
-
+import { getOllamaAllModels } from '@/core/model/utils';
 import { CONFIG_FILE_NAME } from '@/utils/constants';
 import { ConfigItem } from '@/types';
 import { log, oraSpinner } from '@/utils';
-function getConfigFilePath(): string {
-  return path.join(os.homedir(), CONFIG_FILE_NAME);
-}
-
-async function ensureConfigFileExists(): Promise<void> {
-  const configFilePath = getConfigFilePath();
+export const configFilePath = path.join(os.homedir(), CONFIG_FILE_NAME);
+const ensureConfigFileExists = async (): Promise<void> => {
   const initSpinner = oraSpinner();
   try {
     await fs.access(configFilePath);
@@ -29,16 +24,15 @@ async function ensureConfigFileExists(): Promise<void> {
       initSpinner.fail(`Error creating config file: ${writeError}`);
     }
   }
-}
+};
 
-async function readConfigFile(configFilePath: string): Promise<ConfigItem> {
+const readConfigFile = async (configFilePath: string): Promise<ConfigItem> => {
   const fileContent = await fs.readFile(configFilePath, 'utf8');
   return JSON.parse(fileContent) as ConfigItem;
-}
+};
 
-export async function setConfig(key: keyof ConfigItem, value: string): Promise<void> {
+export const setConfig = async (key: keyof ConfigItem, value: string): Promise<void> => {
   await ensureConfigFileExists();
-  const configFilePath = getConfigFilePath();
   try {
     const config = await readConfigFile(configFilePath);
     if (!Object.keys(config).includes(key)) {
@@ -51,11 +45,9 @@ export async function setConfig(key: keyof ConfigItem, value: string): Promise<v
   } catch (error) {
     log.error(`Error reading config file: ${error}`);
   }
-}
-export async function getConfig(key: keyof ConfigItem): Promise<string | null> {
+};
+export const getConfig = async (key: keyof ConfigItem): Promise<string | null> => {
   await ensureConfigFileExists();
-
-  const configFilePath = getConfigFilePath();
   try {
     const config = await readConfigFile(configFilePath);
     if (Object.keys(config).includes(key)) {
@@ -69,10 +61,10 @@ export async function getConfig(key: keyof ConfigItem): Promise<string | null> {
     log.error(`Error reading config file: ${error}`);
     return null;
   }
-}
+};
 
 // 在脚手架项目初始化时调用此函数
-export async function initConfig(): Promise<void> {
+export const initConfig = async (): Promise<void> => {
   await ensureConfigFileExists();
   await getOllamaAllModels();
-}
+};

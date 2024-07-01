@@ -12,7 +12,7 @@ import { getConfig } from '@/core/config';
 
 let instance: AxiosInstance;
 
-async function createAxiosInstance(): Promise<AxiosInstance> {
+const createAxiosInstance = async (): Promise<AxiosInstance> => {
   const baseURL = (await getConfig('OLLAMA_HOST')) as string;
   instance = axios.create({
     baseURL: baseURL,
@@ -24,18 +24,18 @@ async function createAxiosInstance(): Promise<AxiosInstance> {
   instance.interceptors.response.use(responseHandler, errorHandler);
 
   return instance;
-}
-async function requestHandler(
+};
+const requestHandler = async (
   config: InternalAxiosRequestConfig,
-): Promise<InternalAxiosRequestConfig> {
+): Promise<InternalAxiosRequestConfig> => {
   return config;
-}
+};
 
-function responseHandler(response: AxiosResponse) {
+const responseHandler = (response: AxiosResponse) => {
   return response.data;
-}
+};
 
-function errorHandler(error: AxiosError): Promise<any> {
+const errorHandler = (error: AxiosError): Promise<any> => {
   if (error.response) {
     const { status, statusText } = error.response;
 
@@ -57,9 +57,9 @@ function errorHandler(error: AxiosError): Promise<any> {
     log.error('[Error] Network or other error: ' + error.message);
   }
   return Promise.reject(error);
-}
+};
 
-async function instancePromise<R = any>(options: AxiosRequestConfig): Promise<R> {
+const instancePromise = async <R = any>(options: AxiosRequestConfig): Promise<R> => {
   if (!instance) {
     await createAxiosInstance();
   }
@@ -74,13 +74,13 @@ async function instancePromise<R = any>(options: AxiosRequestConfig): Promise<R>
         reject(e);
       });
   });
-}
+};
 
-export function axiosGet<R = any, T = any>(
+export const axiosGet = <R = any, T = any>(
   url: string,
   params?: T,
   config?: AxiosRequestConfig,
-): Promise<R> {
+): Promise<R> => {
   const options: AxiosRequestConfig = {
     url,
     params,
@@ -88,13 +88,13 @@ export function axiosGet<R = any, T = any>(
     ...config,
   };
   return instancePromise<R>(options);
-}
+};
 
-export function axiosPost<R = any, T = any>(
+export const axiosPost = <R = any, T = any>(
   url: string,
   data?: T,
   config?: AxiosRequestConfig,
-): Promise<R> {
+): Promise<R> => {
   const options: AxiosRequestConfig = {
     url,
     data,
@@ -102,4 +102,4 @@ export function axiosPost<R = any, T = any>(
     ...config,
   };
   return instancePromise<R>(options);
-}
+};

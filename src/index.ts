@@ -5,14 +5,15 @@ import packageConfig from '../package.json' assert { type: 'json' };
 
 import generatorHooks from './core/hooks';
 
-import { initOllama, autoSetOllamaHost, getModel } from '@/core/ollama';
+import { initOllama, autoSetOllamaHost } from '@/core/ollama';
+import { getModel } from '@/core/model';
 import { getConfig, setConfig, initConfig } from '@/core/config';
 import { ConfigItem } from '@/types';
 import { log } from '@/utils';
 
 const { version } = packageConfig;
 const program = new Command();
-async function main() {
+const main = async () => {
   try {
     await initConfig();
   } catch (error) {
@@ -81,5 +82,5 @@ async function main() {
       getModel(argv);
     });
   program.parse(process.argv);
-}
+};
 main();

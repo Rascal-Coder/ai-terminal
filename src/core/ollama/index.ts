@@ -2,30 +2,17 @@ import { exec } from 'child_process';
 import { promisify } from 'util';
 import { confirm } from '@clack/prompts';
 import { spawn } from 'child_process';
-import https from 'https';
-import * as cheerio from 'cheerio';
-import fs from 'node:fs';
-import path from 'node:path';
-import os from 'node:os';
-
-import { GroupedData, Models } from './types';
-import { consoleTable1, consoleTable2 } from './utils';
 
 import { setConfig } from '@/core/config';
-import { openBrowser, currentPlatform, oraSpinner, log, OLLAMA_MODEL } from '@/utils';
-import { ollamaModelApi } from '@/utils/service/api';
+import { openBrowser, currentPlatform, oraSpinner, log } from '@/utils';
+import { DOWNLOAD_URLS } from '@/utils/constants';
 const execPromise = promisify(exec);
-const OLLAMA_MODEL_FILE = path.join(os.homedir(), OLLAMA_MODEL);
-const downloadUrlMap: Record<string, string> = {
-  win32: 'https://ollama.com/download/OllamaSetup.exe',
-  darwin: 'https://ollama.com/download/Ollama-darwin.zip',
-};
 
-const allowedPlatforms = Object.keys(downloadUrlMap);
+const allowedPlatforms = Object.keys(DOWNLOAD_URLS);
 
 const getOllamaDownloadUrl = (): string | null => {
   if (allowedPlatforms.includes(currentPlatform())) {
-    return downloadUrlMap[currentPlatform()];
+    return DOWNLOAD_URLS[currentPlatform()];
   } else {
     log.error(`Unsupported platform: ${currentPlatform()}`);
     return null;
@@ -134,14 +121,10 @@ export const initOllama = async () => {
         detached: true,
         stdio: 'ignore',
       });
-      // // 自动设置 Ollama host
-      // autoSetOllamaHost();
       initSpinner.succeed('Success init ollama');
       // 释放进程引用，允许 Node.js 主进程退出
       ollamaProcessHelper.unref();
     } else {
-      // 自动设置 Ollama host
-      // autoSetOllamaHost();
       initSpinner.succeed('Ollama is already running.');
     }
   } else {
@@ -166,76 +149,5 @@ export const initOllama = async () => {
       log.error('\nBye!');
       process.exit();
     }
-  }
-};
-
-export const getOllamaAllModels = async (): Promise<Models> => {
-  return new Promise((resolve, reject) => {
-    fs.readFile(OLLAMA_MODEL_FILE, (err, data) => {
-      if (err || !data) {
-        // 缓存文件不存在，重新抓取数据
-        https.get('https://ollama.com/library', (res) => {
-          let html = '';
-
-          res.on('data', (chunk) => {
-            html += chunk;
-          });
-
-          res.on('end', () => {
-            const $ = cheerio.load(html);
-            const models = [] as Models;
-            $('#repo li').each((_, element) => {
-              const name = $(element).find('h2').text().trim();
-              const type = $(element)
-                .find('span[class*="bg-\\[\\#ddf4ff\\]"]')
-                .map((i, el) => $(el).text().trim())
-                .get()
-                .join(', ');
-              models.push({
-                name: name || 'N/A',
-                type: type || 'N/A',
-              });
-            });
-
-            // 将数据写入缓存文件
-            fs.writeFile(OLLAMA_MODEL_FILE, JSON.stringify({ date: Date.now(), models }), (err) => {
-              if (err) return reject(err);
-              resolve(models);
-            });
-          });
-
-          res.on('error', (err) => reject(err));
-        });
-      } else {
-        // 从缓存文件中读取数据
-        const cachedData = JSON.parse(data.toString()) as {
-          date: number;
-          models: Models;
-        };
-        resolve(cachedData.models);
-      }
-    });
-  });
-};
-export const getModel = async (argv: string) => {
-  if (argv === 'available') {
-    getOllamaAllModels()
-      .then((models) => {
-        consoleTable1(models);
-      })
-      .catch((err) => {
-        console.error('Error fetching or reading the cache:', err);
-      });
-  } else {
-    const res = await ollamaModelApi();
-    const groupedData = res.models.reduce<GroupedData>((acc, model) => {
-      const prefix = model.name.split(':')[0];
-      if (!acc[prefix]) {
-        acc[prefix] = [];
-      }
-      acc[prefix].push(model);
-      return acc;
-    }, {});
-    consoleTable2(groupedData);
   }
 };

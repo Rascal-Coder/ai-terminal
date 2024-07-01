@@ -17,11 +17,11 @@ export const openBrowser = (url: string): void => {
   }
 };
 
-export async function validateFileName(componentName: string): Promise<void> {
+export const validateFileName = async (componentName: string): Promise<void> => {
   // 验证文件名是否合法
   if (!/^[a-zA-Z0-9-_]+$/.test(componentName)) {
     throw new Error(
       'Invalid component name. Only alphanumeric characters, dashes, and underscores are allowed.',
     );
   }
-}
+};

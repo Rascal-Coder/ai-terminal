@@ -1,4 +1,13 @@
+import https from 'https';
+import * as cheerio from 'cheerio';
+import fs from 'node:fs';
+import path from 'node:path';
+import os from 'node:os';
+
 import { GroupedData, Models } from './types';
+
+import { OLLAMA_MODEL } from '@/utils/constants';
+const OLLAMA_MODEL_FILE = path.join(os.homedir(), OLLAMA_MODEL);
 export const consoleTable1 = (
   models: Models,
   nameWidth = 40,
@@ -56,4 +65,52 @@ export const consoleTable2 = (groupedData: GroupedData) => {
     });
     console.log(BORDER_BOT);
   }
+};
+export const getOllamaAllModels = async (): Promise<Models> => {
+  return new Promise((resolve, reject) => {
+    fs.readFile(OLLAMA_MODEL_FILE, (err, data) => {
+      if (err || !data) {
+        // 缓存文件不存在，重新抓取数据
+        https.get('https://ollama.com/library', (res) => {
+          let html = '';
+
+          res.on('data', (chunk) => {
+            html += chunk;
+          });
+
+          res.on('end', () => {
+            const $ = cheerio.load(html);
+            const models = [] as Models;
+            $('#repo li').each((_, element) => {
+              const name = $(element).find('h2').text().trim();
+              const type = $(element)
+                .find('span[class*="bg-\\[\\#ddf4ff\\]"]')
+                .map((i, el) => $(el).text().trim())
+                .get()
+                .join(', ');
+              models.push({
+                name: name || 'N/A',
+                type: type || 'N/A',
+              });
+            });
+
+            // 将数据写入缓存文件
+            fs.writeFile(OLLAMA_MODEL_FILE, JSON.stringify({ date: Date.now(), models }), (err) => {
+              if (err) return reject(err);
+              resolve(models);
+            });
+          });
+
+          res.on('error', (err) => reject(err));
+        });
+      } else {
+        // 从缓存文件中读取数据
+        const cachedData = JSON.parse(data.toString()) as {
+          date: number;
+          models: Models;
+        };
+        resolve(cachedData.models);
+      }
+    });
+  });
 };

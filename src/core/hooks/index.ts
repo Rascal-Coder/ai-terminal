@@ -7,13 +7,13 @@ import { getUserInput } from './select';
 import { generatorComponentPrompt } from './prompt';
 
 import { validateFileName } from '@/utils';
-import { CustomHooksSelection, ChatRequest, ChatResponse } from '@/types';
+import { CustomHooksSelection } from '@/types';
 import { ollamaChatApi } from '@/utils/service/api';
 
 interface CodeBlocks {
   [key: string]: string[];
 }
-async function getAIResponse(prompts: string) {
+const getAIResponse = async (prompts: string) => {
   const data = {
     model: 'qwen:4b',
     messages: [
@@ -34,9 +34,9 @@ async function getAIResponse(prompts: string) {
   };
   const res = await ollamaChatApi(data);
   return res.message.content;
-}
+};
 
-function parseCompletionToCodeBlocks(completion: string): CodeBlocks {
+const parseCompletionToCodeBlocks = (completion: string): CodeBlocks => {
   const tokens = marked.lexer(completion);
   const result: CodeBlocks = {};
 
@@ -51,23 +51,23 @@ function parseCompletionToCodeBlocks(completion: string): CodeBlocks {
   });
 
   return result;
-}
+};
 
-async function writeCodeBlocksToFile(
+const writeCodeBlocksToFile = async (
   result: CodeBlocks,
   outputDir: string,
   fileName: string,
   prefix: string,
-) {
+) => {
   await fs.mkdir(outputDir, { recursive: true });
 
   for (const [_, value] of Object.entries(result)) {
     const filePath = path.join(outputDir, `${fileName}.${prefix}`);
     await fs.writeFile(filePath, value.join('\n\n'), 'utf8');
   }
-}
+};
 
-export default async function generatorHooks(fileName: string) {
+const generatorHooks = async (fileName: string) => {
   try {
     await validateFileName(fileName);
 
@@ -96,4 +96,5 @@ export default async function generatorHooks(fileName: string) {
   } catch (error) {
     console.error(error);
   }
-}
+};
+export default generatorHooks;

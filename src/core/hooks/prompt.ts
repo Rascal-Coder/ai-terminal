@@ -1,10 +1,10 @@
-import { CustomHooksSelection, UserSelection } from '@/types';
+import { CustomHooksSelection } from '@/types';
 
-function generatorComponentPrompt({
+export const generatorComponentPrompt = ({
   framework,
   languageType,
   userInput,
-}: CustomHooksSelection): string {
+}: CustomHooksSelection): string => {
   return `
   请根据以下信息生成一个自定义的 Hook：
 
@@ -20,6 +20,6 @@ function generatorComponentPrompt({
   4. 确保生成的代码能够通过 TypeScript 的类型检查。
   5. 最后只返回自定义 Hook 方法，不需要返回该 Hook 的使用示例。
     `;
-}
+};
 
-export { generatorComponentPrompt };
+//  { generatorComponentPrompt };

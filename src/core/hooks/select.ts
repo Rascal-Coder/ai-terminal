@@ -3,10 +3,10 @@ import { select, text, isCancel } from '@clack/prompts';
 import { CustomHooksSelection } from '@/types';
 
 // 通用的选择函数
-async function makeSelection(
+const makeSelection = async (
   message: string,
   options: { value: string; label: string }[],
-): Promise<string | null> {
+): Promise<string | null> => {
   const selection = await select({ message, options });
 
   if (isCancel(selection)) {
@@ -15,10 +15,10 @@ async function makeSelection(
   }
 
   return selection as string;
-}
+};
 
 // 提供输入框
-async function inputDefaultText(message: string, defaultValue: string): Promise<string | null> {
+const inputDefaultText = async (message: string, defaultValue: string): Promise<string | null> => {
   const input = await text({ message, defaultValue });
 
   if (isCancel(input)) {
@@ -27,10 +27,10 @@ async function inputDefaultText(message: string, defaultValue: string): Promise<
   }
 
   return input;
-}
+};
 
 // 主函数
-export async function getUserInput(): Promise<CustomHooksSelection | null> {
+export const getUserInput = async (): Promise<CustomHooksSelection | null> => {
   const frameworkOptions = [
     { value: 'React', label: 'React' },
     { value: 'Vue', label: 'Vue' },
@@ -51,4 +51,4 @@ export async function getUserInput(): Promise<CustomHooksSelection | null> {
   if (!userInput) return null;
 
   return { framework, languageType, userInput };
-}
+};
