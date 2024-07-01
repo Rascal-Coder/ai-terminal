@@ -1,9 +1,11 @@
 #!/usr/bin/env node
 import { Command } from 'commander';
+import inquirer from 'inquirer';
 
 import packageConfig from '../package.json' assert { type: 'json' };
 
 import generatorHooks from './core/hooks';
+import { ollamaServer } from './utils/ollamaServer';
 
 import { initOllama, autoSetOllamaHost } from '@/core/ollama';
 import { getModel } from '@/core/model';
@@ -68,11 +70,30 @@ const main = async () => {
         log.error(`Error setHost: ${error}`);
       }
     });
+
   program
     .command('setModel')
     .description('Set ollama service model')
     .action(async () => {
-      console.log('setModel');
+      const { inputModel } = await inquirer.prompt({
+        type: 'input',
+        name: 'inputModel',
+        message: 'Enter the model name:',
+      });
+      try {
+        const ollama = await ollamaServer();
+        const res = await ollama.list();
+        const modelExists = res.models.some((model) => model.name === inputModel);
+
+        if (modelExists) {
+          setConfig('OLLAMA_MODEL', inputModel);
+        } else {
+          log.error(`Model '${inputModel}' does not exist.`);
+          log.warning('Please use the command "ai list" to view available models.');
+        }
+      } catch (error) {
+        log.error(`Error: ${error}`);
+      }
     });
 
   program
@@ -83,4 +104,5 @@ const main = async () => {
     });
   program.parse(process.argv);
 };
+
 main();

@@ -16,5 +16,3 @@ export interface Staged {
   filename: string;
   content: string;
 }
-
-export * from './ollama';

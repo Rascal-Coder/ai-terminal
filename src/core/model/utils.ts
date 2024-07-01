@@ -1,15 +1,14 @@
-import https from 'https';
 import * as cheerio from 'cheerio';
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
-
-import { GroupedData, Models } from './types';
+import { ModelResponse } from 'ollama';
+import axios from 'axios';
 
 import { OLLAMA_MODEL } from '@/utils/constants';
 const OLLAMA_MODEL_FILE = path.join(os.homedir(), OLLAMA_MODEL);
 export const consoleTable1 = (
-  models: Models,
+  models: { name: string; type: string }[],
   nameWidth = 40,
   typeWidth = 20,
   nameColor = '\x1b[36m',
@@ -40,7 +39,7 @@ export const consoleTable1 = (
   console.log(BORDER_BOT);
 };
 
-export const consoleTable2 = (groupedData: GroupedData) => {
+export const consoleTable2 = (groupedData: { [key: string]: ModelResponse[] }) => {
   const BORDER_TOP = '╔════════════════════════════════════════════════════╗';
   const BORDER_MID = '╠════════════════════════════════════════════════════╣';
   const BORDER_BOT = '╚════════════════════════════════════════════════════╝';
@@ -66,51 +65,37 @@ export const consoleTable2 = (groupedData: GroupedData) => {
     console.log(BORDER_BOT);
   }
 };
-export const getOllamaAllModels = async (): Promise<Models> => {
-  return new Promise((resolve, reject) => {
-    fs.readFile(OLLAMA_MODEL_FILE, (err, data) => {
-      if (err || !data) {
-        // 缓存文件不存在，重新抓取数据
-        https.get('https://ollama.com/library', (res) => {
-          let html = '';
-
-          res.on('data', (chunk) => {
-            html += chunk;
-          });
-
-          res.on('end', () => {
-            const $ = cheerio.load(html);
-            const models = [] as Models;
-            $('#repo li').each((_, element) => {
-              const name = $(element).find('h2').text().trim();
-              const type = $(element)
-                .find('span[class*="bg-\\[\\#ddf4ff\\]"]')
-                .map((i, el) => $(el).text().trim())
-                .get()
-                .join(', ');
-              models.push({
-                name: name || 'N/A',
-                type: type || 'N/A',
-              });
-            });
-
-            // 将数据写入缓存文件
-            fs.writeFile(OLLAMA_MODEL_FILE, JSON.stringify({ date: Date.now(), models }), (err) => {
-              if (err) return reject(err);
-              resolve(models);
-            });
-          });
-
-          res.on('error', (err) => reject(err));
-        });
-      } else {
-        // 从缓存文件中读取数据
-        const cachedData = JSON.parse(data.toString()) as {
-          date: number;
-          models: Models;
-        };
-        resolve(cachedData.models);
-      }
+export const getOllamaAllModels = async (): Promise<{ name: string; type: string }[]> => {
+  try {
+    const cachedData = await fs.promises.readFile(OLLAMA_MODEL_FILE, 'utf8');
+    const { models } = JSON.parse(cachedData) as {
+      date: number;
+      models: { name: string; type: string }[];
+    };
+    return models;
+  } catch {
+    // 缓存文件不存在或读取失败，重新抓取数据
+    const { data: html } = await axios.get('https://ollama.com/library');
+    const $ = cheerio.load(html);
+    const models = [] as { name: string; type: string }[];
+    $('#repo li').each((_, element) => {
+      const name = $(element).find('h2').text().trim();
+      const type = $(element)
+        .find('span[class*="bg-\\[\\#ddf4ff\\]"]')
+        .map((i, el) => $(el).text().trim())
+        .get()
+        .join(', ');
+      models.push({
+        name: name || 'N/A',
+        type: type || 'N/A',
+      });
     });
-  });
+
+    // 将数据写入缓存文件
+    await fs.promises.writeFile(
+      OLLAMA_MODEL_FILE,
+      JSON.stringify({ date: Date.now(), models }, null, 2),
+    );
+    return models;
+  }
 };

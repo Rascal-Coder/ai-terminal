@@ -1,21 +1,24 @@
 import { outro, spinner } from '@clack/prompts';
 import { marked } from 'marked';
 import path from 'path';
-import fs from 'fs/promises'; // 使用异步的文件系统操作
+import fs from 'fs/promises';
+
+import { getConfig } from '../config';
 
 import { getUserInput } from './select';
 import { generatorComponentPrompt } from './prompt';
 
 import { validateFileName } from '@/utils';
 import { CustomHooksSelection } from '@/types';
-import { ollamaChatApi } from '@/utils/service/api';
+import { ollamaServer } from '@/utils/ollamaServer';
 
 interface CodeBlocks {
   [key: string]: string[];
 }
 const getAIResponse = async (prompts: string) => {
+  const model = (await getConfig('OLLAMA_MODEL')) as string;
   const data = {
-    model: 'qwen:4b',
+    model: model,
     messages: [
       {
         role: 'system',
@@ -26,13 +29,13 @@ const getAIResponse = async (prompts: string) => {
         content: prompts,
       },
     ],
-    stream: false,
     options: {
       top_p: 0.7,
       temperature: 0.7,
     },
   };
-  const res = await ollamaChatApi(data);
+  const ollama = await ollamaServer();
+  const res = await ollama.chat(data);
   return res.message.content;
 };
 

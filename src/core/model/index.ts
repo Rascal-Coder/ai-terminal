@@ -1,7 +1,8 @@
-import { GroupedData } from './types';
+import { ModelResponse } from 'ollama';
+
 import { consoleTable1, consoleTable2, getOllamaAllModels } from './utils';
 
-import { ollamaModelApi } from '@/utils/service/api';
+import { ollamaServer } from '@/utils/ollamaServer';
 
 export const getModel = async (argv: string) => {
   if (argv === 'available') {
@@ -13,8 +14,9 @@ export const getModel = async (argv: string) => {
         console.error('Error fetching or reading the cache:', err);
       });
   } else {
-    const res = await ollamaModelApi();
-    const groupedData = res.models.reduce<GroupedData>((acc, model) => {
+    const ollama = await ollamaServer();
+    const res = await ollama.list();
+    const groupedData = res.models.reduce<{ [key: string]: ModelResponse[] }>((acc, model) => {
       const prefix = model.name.split(':')[0];
       if (!acc[prefix]) {
         acc[prefix] = [];
