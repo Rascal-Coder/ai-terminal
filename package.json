@@ -1,6 +1,6 @@
 {
-  "name": "ai-terminal",
-  "version": "1.0.0-rc",
+  "name": "@ras/ai-cli",
+  "version": "1.0.0",
   "description": "",
   "main": "index.js",
   "type": "module",
