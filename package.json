@@ -1,6 +1,6 @@
 {
   "name": "@rascaljs/ai-cli",
-  "version": "1.0.2",
+  "version": "1.0.3-beta.1",
   "description": "",
   "main": "index.js",
   "type": "module",
@@ -15,13 +15,13 @@
     "dev": "rollup -c -w",
     "commit": "git-cz",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,cjs,mjs,json}\"",
-    "postinstall": "if [ \"$NODE_ENV\" = \"development\" ]; then husky install; fi",
+    "postinstall": "husky install",
     "prepublishOnly": "npm run remove-husky",
     "format:ci": "prettier --list-different \"**/*.{ts,tsx,js,jsx}\"",
     "lint": "eslint \"src/**/*.{js,ts,jsx,tsx}\" --fix",
     "lint:ci": "eslint \"src/**/*.{js,ts,jsx,tsx}\"",
     "release": "pnpm run build && bumpp --push --tag && npm publish",
-    "remove-husky": "rm -rf .husky && npm pkg delete scripts.postinstall"
+    "remove-husky": "npm pkg delete scripts.postinstall"
   },
   "keywords": [
     "ai', 'terminal"
