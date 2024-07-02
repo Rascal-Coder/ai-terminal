@@ -1,18 +1,21 @@
 #!/usr/bin/env node
 import { Command } from 'commander';
 import inquirer from 'inquirer';
+import Table from 'cli-table3';
+import chalk from 'chalk';
 
 import packageConfig from '../package.json' assert { type: 'json' };
 
-import generatorHooks from './core/hooks';
-import { ollamaServer } from './utils/ollamaServer';
-
+import { ollamaServer } from '@/utils/ollamaServer';
+import generatorHooks from '@/core/hooks';
+import createComponents from '@/core/components';
+import commitMessage from '@/core/commit';
+import aiCodeReview from '@/core/code-review';
 import { initOllama, autoSetOllamaHost } from '@/core/ollama';
 import { getModel } from '@/core/model';
 import { getConfig, setConfig, initConfig } from '@/core/config';
 import { ConfigItem } from '@/types';
 import { log } from '@/utils';
-
 const { version } = packageConfig;
 const program = new Command();
 const main = async () => {
@@ -75,33 +78,110 @@ const main = async () => {
     .command('setModel')
     .description('Set ollama service model')
     .action(async () => {
-      const { inputModel } = await inquirer.prompt({
-        type: 'input',
-        name: 'inputModel',
-        message: 'Enter the model name:',
-      });
       try {
         const ollama = await ollamaServer();
         const res = await ollama.list();
-        const modelExists = res.models.some((model) => model.name === inputModel);
+        const models = res.models.map((model) => model.name);
 
-        if (modelExists) {
-          setConfig('OLLAMA_MODEL', inputModel);
-        } else {
-          log.error(`Model '${inputModel}' does not exist.`);
-          log.warning('Please use the command "ai list" to view available models.');
-        }
+        const { selectedModel } = await inquirer.prompt({
+          type: 'list',
+          name: 'selectedModel',
+          message: 'Select the model:',
+          choices: models,
+        });
+
+        setConfig('OLLAMA_MODEL', selectedModel);
       } catch (error) {
         log.error(`Error: ${error}`);
       }
     });
 
   program
+    .command('commit')
+    .description(
+      'Generate a commit message\nAI will automatically generate submission information for you',
+    )
+    .action(() => {
+      commitMessage();
+    });
+
+  program
+    .command('component <name> [path]')
+    .description('Add a new component')
+    .action(async (name, path) => {
+      createComponents({ componentName: name, componentPath: path });
+    });
+
+  program
+    .command('review')
+    .description(
+      'Generate a code review\nAI will automatically generate code review information for you',
+    )
+    .action(() => {
+      aiCodeReview();
+    });
+  program
     .command('list [available]')
     .description('Show ollama model list')
     .action(async (argv) => {
       getModel(argv);
     });
+
+  program.addHelpText('after', () => {
+    const table = new Table({
+      head: [chalk.cyan('Command'), chalk.cyan('Description')],
+    });
+
+    table.push(
+      [chalk.cyan('init'), 'Initialize AI terminal'],
+      [
+        chalk.cyan('set <key> <value>'),
+        'Set a global configuration key and value.\n\nParameters:\n  key: The configuration key\n  value: The value to set\n\nExample:\n  ' +
+          chalk.blue('$ ai set username john_doe'),
+      ],
+      [
+        chalk.cyan('hooks <name>'),
+        'Add a new Hooks.\n\nParameters:\n  name: The name of the hooks\n\nExample:\n  ' +
+          chalk.blue('$ ai hooks useCustomHook'),
+      ],
+      [
+        chalk.cyan('get <key>'),
+        'Get a global configuration value.\n\nParameters:\n  key: The configuration key to retrieve\n\nExample:\n  ' +
+          chalk.blue('$ ai get username'),
+      ],
+      [
+        chalk.cyan('component <name> [path]'),
+        'Add a new component.\n\nParameters:\n  name: The name of the component\n  path: (Optional) The path to add the component\n\nExample:\n  ' +
+          chalk.blue('$ ai component Button src/components'),
+      ],
+      [
+        chalk.cyan('commit'),
+        'Generate a commit message. AI will automatically generate submission information for you.\n\nExample:\n  ' +
+          chalk.blue('$ ai commit'),
+      ],
+      [
+        chalk.cyan('review'),
+        'Generate a code review. AI will automatically generate code review information for you.\n\nExample:\n  ' +
+          chalk.blue('$ ai review'),
+      ],
+      [
+        chalk.cyan('setHost'),
+        'Set Ollama service host.\n\nExample:\n  ' + chalk.blue('$ ai setHost'),
+      ],
+      [
+        chalk.cyan('setModel'),
+        'Set Ollama service model.\n\nExample:\n  ' + chalk.blue('$ ai setModel'),
+      ],
+      [
+        chalk.cyan('list [available]'),
+        'Show Ollama model list.\n\nParameters:\n  available: (Optional) Show available models\n\nExample:\n  ' +
+          chalk.blue('$ ai list'),
+      ],
+    );
+
+    return `\n${table.toString()}\n`;
+  });
+
   program.parse(process.argv);
 };
 

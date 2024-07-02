@@ -18,7 +18,8 @@
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,cjs,mjs,json}\"",
     "format:ci": "prettier --list-different \"**/*.{ts,tsx,js,jsx}\"",
     "lint": "eslint \"src/**/*.{js,ts,jsx,tsx}\" --fix",
-    "lint:ci": "eslint \"src/**/*.{js,ts,jsx,tsx}\""
+    "lint:ci": "eslint \"src/**/*.{js,ts,jsx,tsx}\"",
+    "release": "pnpm run build && bumpp --push --tag && npm publish"
   },
   "keywords": [
     "ai', 'terminal"
@@ -37,6 +38,7 @@
     "@types/progress": "^2.0.7",
     "@typescript-eslint/eslint-plugin": "^7.13.0",
     "@typescript-eslint/parser": "^7.13.0",
+    "bumpp": "^9.4.1",
     "commitizen": "^4.3.0",
     "cz-git": "^1.9.3",
     "eslint": "^8",
@@ -58,14 +60,14 @@
     "chalk": "^5.3.0",
     "cheerio": "1.0.0-rc.12",
     "cli-spinners": "^3.0.0",
+    "cli-table3": "^0.6.5",
     "commander": "^12.1.0",
     "fs-extra": "^11.2.0",
     "inquirer": "^9.3.2",
     "marked": "^13.0.1",
     "node-fetch": "^3.3.2",
     "ollama": "^0.5.2",
-    "ora": "^8.0.1",
-    "progress": "^2.0.3"
+    "ora": "^8.0.1"
   },
   "lint-staged": {
     "*.{js,ts,jsx,tsx}": [
