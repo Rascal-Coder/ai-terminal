@@ -6,20 +6,18 @@ export const generatorComponentPrompt = ({
   userInput,
 }: CustomHooksSelection): string => {
   return `
-  请根据以下信息生成一个自定义的 Hook：
+  Please generate a custom Hook based on the following information:
 
-  框架：${framework}
-  编程语言：${languageType}
+  Framework: ${framework}
+  Programming Language: ${languageType}
 
-  描述：${userInput}
+  Description: ${userInput}
 
-  要求：
-  1. 提供完整的代码实现。
-  2. 包含 Hook 定义和状态管理（如果适用）。
-  3. 添加 TypeDoc 注释，但不包括使用示例。
-  4. 确保生成的代码能够通过 TypeScript 的类型检查。
-  5. 最后只返回自定义 Hook 方法，不需要返回该 Hook 的使用示例。
-    `;
+  Requirements:
+  1. Provide a complete code implementation.
+  2. Include Hook definition and state management (if applicable).
+  3. Add TypeDoc comments, but do not include usage examples.
+  4. Ensure the generated code passes TypeScript type checks.
+  5. Only return the custom Hook function, do not return usage examples.
+  `;
 };
-
-//  { generatorComponentPrompt };

@@ -16,11 +16,13 @@ export default {
   },
   plugins: [
     production && del({ targets: 'dist/*' }),
-    resolve(),
+    resolve({
+      preferBuiltins: true,
+    }),
     commonjs(),
     typescript({ tsconfig: './tsconfig.json' }),
     json(),
     terser(),
   ],
-  external: ['child_process', 'os', 'util', '@clack/prompts', 'ora', 'chalk', 'cherrio', 'ollama'],
+  external: ['@clack/prompts', 'ora', 'chalk', 'cherrio', 'ollama'],
 };
