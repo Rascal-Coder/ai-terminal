@@ -1,7 +1,9 @@
-import { exec } from 'child_process';
+import { exec, execSync } from 'child_process';
 import { promisify } from 'util';
 import { confirm } from '@clack/prompts';
 import { spawn } from 'child_process';
+import path from 'node:path';
+import fs from 'fs';
 
 import { setConfig } from '@/core/config';
 import { openBrowser, currentPlatform, oraSpinner, log } from '@/utils';
@@ -106,7 +108,7 @@ export const autoSetOllamaHost = async () => {
 export const initOllama = async () => {
   // 初始化一个 spinner 来显示进度
   const initSpinner = oraSpinner();
-  initSpinner.start('Check Ollama available...');
+  // initSpinner.start('Check Ollama available...');
 
   // 检查 Ollama 是否可用
   const available = await isOllamaAvailable();
@@ -116,14 +118,14 @@ export const initOllama = async () => {
     const running = await isOllamaServeRunning();
     if (!running) {
       // 如果 Ollama 服务没有运行，则启动服务
-      initSpinner.start('Starting ollama serve...');
-      const ollamaProcessHelper = spawn('node', ['dist/startOllamaServe.js'], {
-        detached: true,
-        stdio: 'ignore',
-      });
+      // const ollamaProcessHelper = spawn('node', ['dist/startOllamaServe.js'], {
+      //   detached: true,
+      //   stdio: 'ignore',
+      // });
+      startOllamaServe();
       initSpinner.succeed('Success init ollama');
       // 释放进程引用，允许 Node.js 主进程退出
-      ollamaProcessHelper.unref();
+      // ollamaProcessHelper.unref();
     } else {
       initSpinner.succeed('Ollama is already running.');
     }
@@ -150,4 +152,44 @@ export const initOllama = async () => {
       process.exit();
     }
   }
+};
+const startOllamaServe = () => {
+  try {
+    const ollamaPath = getExecutablePath('ollama');
+    const directory = path.dirname(ollamaPath);
+    const appPath = path.join(directory, 'ollama app.exe');
+
+    if (!fs.existsSync(appPath)) {
+      console.error(`Executable not found: ${appPath}`);
+      return;
+    }
+
+    const ollamaProcess = spawn(appPath, [], {
+      detached: true,
+      stdio: 'ignore',
+    });
+
+    console.log(`Starting Ollama: ${appPath}`);
+
+    ollamaProcess.unref();
+  } catch (error) {
+    console.error(`Error starting Ollama: ${error}`);
+  }
+};
+/**
+ * 获取可执行文件的路径。
+ * @param executable 要查找的可执行文件的名称。
+ * @returns 可执行文件的路径字符串。
+ */
+const getExecutablePath = (executable: string) => {
+  let command;
+  if (currentPlatform() === 'win32') {
+    command = `where ${executable}`;
+  } else if (currentPlatform() === 'darwin') {
+    command = `which ${executable}`;
+  } else {
+    throw new Error(`Unsupported platform: ${currentPlatform()}`);
+  }
+  const result = execSync(command).toString().trim();
+  return result;
 };
