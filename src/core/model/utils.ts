@@ -1,5 +1,5 @@
 import * as cheerio from 'cheerio';
-import fs from 'node:fs';
+import { promises as fs } from 'fs';
 import path from 'node:path';
 import os from 'node:os';
 import { ModelResponse } from 'ollama';
@@ -67,7 +67,7 @@ export const consoleTable2 = (groupedData: { [key: string]: ModelResponse[] }) =
 };
 export const getOllamaAllModels = async (): Promise<{ name: string; type: string }[]> => {
   try {
-    const cachedData = await fs.promises.readFile(OLLAMA_MODEL_FILE, 'utf8');
+    const cachedData = await fs.readFile(OLLAMA_MODEL_FILE, 'utf8');
     const { models } = JSON.parse(cachedData) as {
       date: number;
       models: { name: string; type: string }[];
@@ -92,10 +92,7 @@ export const getOllamaAllModels = async (): Promise<{ name: string; type: string
     });
 
     // 将数据写入缓存文件
-    await fs.promises.writeFile(
-      OLLAMA_MODEL_FILE,
-      JSON.stringify({ date: Date.now(), models }, null, 2),
-    );
+    await fs.writeFile(OLLAMA_MODEL_FILE, JSON.stringify({ date: Date.now(), models }, null, 2));
     return models;
   }
 };

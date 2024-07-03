@@ -30,45 +30,64 @@ export const validateFileName = async (componentName: string): Promise<void> => 
   }
 };
 
-export function getFilesChangedInGitAdd() {
-  const gitDiff = execSync('git diff --cached --name-status', { encoding: 'utf-8' });
+export const getFilesChangedInGitAdd = (file?: string) => {
+  let gitDiff = '';
+  try {
+    if (file) {
+      gitDiff = execSync(`git diff --cached --name-status ${file}`, { encoding: 'utf-8' });
+    } else {
+      gitDiff = execSync('git diff --cached --name-status', { encoding: 'utf-8' });
+    }
+  } catch (error) {
+    console.error('Error executing git diff command:', error);
+    return [];
+  }
   const files = gitDiff.split('\n');
 
   // 过滤掉 lock 文件和被删除的文件
   const ignoredPatterns = [/package-lock\.json$/, /yarn\.lock$/, /pnpm-lock\.yaml$/];
-  const filteredFiles = files
-    .map((line) => {
-      const [status, file] = line.trim().split('\t');
-      return { status, file };
-    })
-    .filter(({ status, file }) => {
-      return file && status !== 'D' && !ignoredPatterns.some((pattern) => pattern.test(file));
-    })
-    .map(({ file }) => file);
+  // const filteredFiles = files
+  //   .map((line) => {
+  //     const [status, file] = line.trim().split('\t');
+  //     return { status, file };
+  //   })
+  //   .filter(({ status, file }) => {
+  //     return file && status !== 'D' && !ignoredPatterns.some((pattern) => pattern.test(file));
+  //   })
+  //   .map(({ file }) => file);
 
+  // return filteredFiles;
+  const filteredFiles: string[] = [];
+
+  files.forEach((line) => {
+    const [status, ...fileNames] = line.trim().split('\t');
+    const fileList = status.includes('R') ? [fileNames[1]] : [fileNames[0]];
+    fileList.forEach((file) => {
+      if (file && status !== 'D' && !ignoredPatterns.some((pattern) => pattern.test(file))) {
+        filteredFiles.push(file);
+      }
+    });
+  });
   return filteredFiles;
-}
+};
 
-export function allStagedFiles2Message(staged: Staged[]) {
+export const allStagedFiles2Message = (staged: Staged[]) => {
   return staged.map((item) => item.content).join('\n');
-}
+};
 
 /**
  * 自动执行提交信息
  */
-export async function autoCommit(commitMsg: string) {
+export const autoCommit = async (commitMsg: string) => {
   try {
-    const result = execSync(`git commit -m "${commitMsg}"`);
+    execSync(`git commit -m "${commitMsg}"`);
     return 0;
   } catch (e) {
     return -1;
   }
-}
+};
 
-export function remindCommiting() {
-  console.log('正在提交中...');
-}
-export async function validatePath(componentPath: string): Promise<void> {
+export const validatePath = async (componentPath: string): Promise<void> => {
   // 验证路径是否合法
   const dir = path.resolve(componentPath);
 
@@ -80,4 +99,4 @@ export async function validatePath(componentPath: string): Promise<void> {
   } catch (error) {
     throw new Error('Invalid path. The specified directory does not exist.');
   }
-}
+};

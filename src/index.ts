@@ -25,10 +25,13 @@ const main = async () => {
     log.error(`Error reading config file: ${error}`);
     process.exit(1); // 如果无法确保配置文件存在，则退出进程
   }
-  program.name('ai-terminal').description('ai terminal for you').version(version);
+  program
+    .name('ai-cli')
+    .description(`👏欢迎使用${chalk.green('[ai-cli]')}`)
+    .version(version);
   program
     .command('init')
-    .description('Initialize ai terminal')
+    .description('Initialize ai cli')
     .action(() => {
       initOllama();
     });
@@ -47,7 +50,7 @@ const main = async () => {
   program
     .command('hooks <name>')
     .description('Add a new Hooks')
-    .action(async (name) => {
+    .action((name) => {
       log.info(`Adding new Hooks: ${name}`);
       generatorHooks(name);
     });
@@ -108,22 +111,22 @@ const main = async () => {
   program
     .command('component <name> [path]')
     .description('Add a new component')
-    .action(async (name, path) => {
+    .action((name, path) => {
       createComponents({ componentName: name, componentPath: path });
     });
 
   program
-    .command('review')
+    .command('review [path]')
     .description(
       'Generate a code review\nAI will automatically generate code review information for you',
     )
-    .action(() => {
-      aiCodeReview();
+    .action((path) => {
+      aiCodeReview(path);
     });
   program
     .command('list [available]')
     .description('Show ollama model list')
-    .action(async (argv) => {
+    .action((argv) => {
       getModel(argv);
     });
 
@@ -133,49 +136,49 @@ const main = async () => {
     });
 
     table.push(
-      [chalk.cyan('init'), 'Initialize AI terminal'],
+      [chalk.cyan('init'), 'Initialize AI cli'],
       [
         chalk.cyan('set <key> <value>'),
         'Set a global configuration key and value.\n\nParameters:\n  key: The configuration key\n  value: The value to set\n\nExample:\n  ' +
-          chalk.blue('$ ai set username john_doe'),
+          chalk.green('$ ai set OLLAMA_MODEL llama2:latest'),
       ],
       [
         chalk.cyan('hooks <name>'),
         'Add a new Hooks.\n\nParameters:\n  name: The name of the hooks\n\nExample:\n  ' +
-          chalk.blue('$ ai hooks useCustomHook'),
+          chalk.green('$ ai hooks useCustomHook'),
       ],
       [
         chalk.cyan('get <key>'),
         'Get a global configuration value.\n\nParameters:\n  key: The configuration key to retrieve\n\nExample:\n  ' +
-          chalk.blue('$ ai get username'),
+          chalk.green('$ ai get username'),
       ],
       [
         chalk.cyan('component <name> [path]'),
         'Add a new component.\n\nParameters:\n  name: The name of the component\n  path: (Optional) The path to add the component\n\nExample:\n  ' +
-          chalk.blue('$ ai component Button src/components'),
+          chalk.green('$ ai component Button src/components'),
       ],
       [
         chalk.cyan('commit'),
         'Generate a commit message. AI will automatically generate submission information for you.\n\nExample:\n  ' +
-          chalk.blue('$ ai commit'),
+          chalk.green('$ ai commit'),
       ],
       [
         chalk.cyan('review'),
         'Generate a code review. AI will automatically generate code review information for you.\n\nExample:\n  ' +
-          chalk.blue('$ ai review'),
+          chalk.green('$ ai review'),
       ],
       [
         chalk.cyan('setHost'),
-        'Set Ollama service host.\n\nExample:\n  ' + chalk.blue('$ ai setHost'),
+        'Set Ollama service host.\n\nExample:\n  ' + chalk.green('$ ai setHost'),
       ],
       [
         chalk.cyan('setModel'),
-        'Set Ollama service model.\n\nExample:\n  ' + chalk.blue('$ ai setModel'),
+        'Set Ollama service model.\n\nExample:\n  ' + chalk.green('$ ai setModel'),
       ],
       [
         chalk.cyan('list [available]'),
         'Show Ollama model list.\n\nParameters:\n  available: (Optional) Show available models\n\nExample:\n  ' +
-          chalk.blue('$ ai list'),
+          chalk.green('$ ai list'),
       ],
     );
 

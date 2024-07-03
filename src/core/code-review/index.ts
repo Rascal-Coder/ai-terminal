@@ -1,33 +1,38 @@
-import fs from 'node:fs';
+import { promises as fs } from 'fs';
 import { intro, outro, spinner } from '@clack/prompts';
 import path from 'node:path';
+import chalk from 'chalk';
 
 import { getConfig } from '../config';
 
 import { codeReviewPrompt } from './prompt';
 
-import { getFilesChangedInGitAdd, allStagedFiles2Message } from '@/utils';
+import { getFilesChangedInGitAdd, allStagedFiles2Message, validatePath } from '@/utils';
 import { ollamaServer } from '@/utils/ollamaServer';
-
-export default async function commitMessage() {
-  intro('-- 开始读取缓存区文件更改');
-
+import { CHAT_OPTIONS } from '@/utils/constants';
+const aiCodeReview = async (file?: string) => {
+  intro(`${chalk.blue('开始读取缓存区文件更改')}`);
+  if (file) {
+    await validatePath(file);
+    console.log('Valid path.');
+  }
   // 获取缓存区的文件列表
-  const files = getFilesChangedInGitAdd();
-
+  const files = getFilesChangedInGitAdd(file);
   // 读取文件内容，并存储在staged数组中
-  const staged = files.filter(Boolean).map((file) => {
-    const content = fs.readFileSync(file, 'utf-8');
-    return { filename: file, content };
-  });
+  const staged = await Promise.all(
+    files.filter(Boolean).map(async (file) => {
+      const content = await fs.readFile(file, 'utf-8');
+      return { filename: file, content };
+    }),
+  );
 
   // 判断是否有文件被缓存
   if (!staged || staged.length === 0) {
     throw new Error('没有文件被缓存');
   }
 
-  const s = spinner();
-  s.start('AI 正在分析您的更改');
+  const promptsSpinner = spinner();
+  promptsSpinner.start('AI 正在分析您的更改');
 
   try {
     // 将缓存的文件内容转换为消息
@@ -45,26 +50,20 @@ export default async function commitMessage() {
           content: codeReviewPrompt,
         },
       ],
-      options: {
-        top_p: 0.9, // 提高文本的多样性
-        temperature: 0.6, // 降低温度以增加结果的确定性
-        num_predict: 256, // 增加预测的最大token数量，以确保生成完整代码
-        repeat_penalty: 1.2, // 提高重复惩罚以减少重复内容
-        top_k: 50, // 适度降低top_k值以减少无关内容
-      },
+      options: CHAT_OPTIONS,
     };
     const ollama = await ollamaServer();
     const res = await ollama.chat(data);
     const completion = res.message.content;
-    const filePath = path.join(process.cwd(), `moment.md`);
+    const filePath = path.join(process.cwd(), `cr.md`);
+    await fs.writeFile(filePath, completion, 'utf8');
 
-    fs.writeFileSync(filePath, completion, 'utf8');
-
-    s.stop();
+    promptsSpinner.stop();
     outro('result');
   } catch (err) {
-    s.stop();
+    promptsSpinner.stop();
     console.error('错误:', err);
     process.exit(1);
   }
-}
+};
+export default aiCodeReview;

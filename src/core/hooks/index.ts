@@ -1,7 +1,7 @@
 import { outro, spinner } from '@clack/prompts';
 import { marked } from 'marked';
 import path from 'path';
-import fs from 'fs/promises';
+import { promises as fs } from 'fs';
 
 import { getConfig } from '../config';
 
@@ -11,6 +11,7 @@ import { generatorComponentPrompt } from './prompt';
 import { validateFileName } from '@/utils';
 import { CustomHooksSelection } from '@/types';
 import { ollamaServer } from '@/utils/ollamaServer';
+import { CHAT_OPTIONS } from '@/utils/constants';
 
 interface CodeBlocks {
   [key: string]: string[];
@@ -29,13 +30,7 @@ const getAIResponse = async (prompts: string) => {
         content: prompts,
       },
     ],
-    options: {
-      top_p: 0.9, // 提高文本的多样性
-      temperature: 0.6, // 降低温度以增加结果的确定性
-      num_predict: 256, // 增加预测的最大token数量，以确保生成完整代码
-      repeat_penalty: 1.2, // 提高重复惩罚以减少重复内容
-      top_k: 50, // 适度降低top_k值以减少无关内容
-    },
+    options: CHAT_OPTIONS,
   };
   const ollama = await ollamaServer();
   const res = await ollama.chat(data);

@@ -34,7 +34,6 @@ export async function getUserInput(): Promise<UserSelection | null> {
   const frameworkOptions = [
     { value: 'react', label: 'React' },
     { value: 'vue', label: 'Vue' },
-    { value: 'angular', label: 'Angular' },
   ];
   const languageTypeOptions = [
     { value: 'JavaScript', label: 'JavaScript' },

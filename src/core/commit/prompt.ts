@@ -1,5 +1,7 @@
 import { getConfig } from '../config';
 
+import { CHAT_OPTIONS } from '@/utils/constants';
+
 type CommitType = '' | 'conventional';
 const commitTypeFormats: Record<CommitType, string> = {
   '': '<commit message>',
@@ -70,12 +72,6 @@ export const createChatRequest = async (
       { role: 'system', content: generatePrompt(locale, maxLength) },
       { role: 'user', content: diff },
     ],
-    options: {
-      top_p: 0.9, // 提高文本的多样性
-      temperature: 0.6, // 降低温度以增加结果的确定性
-      num_predict: 256, // 增加预测的最大token数量，以确保生成完整代码
-      repeat_penalty: 1.2, // 提高重复惩罚以减少重复内容
-      top_k: 50, // 适度降低top_k值以减少无关内容
-    },
+    options: CHAT_OPTIONS,
   };
 };

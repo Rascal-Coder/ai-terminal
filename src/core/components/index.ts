@@ -1,4 +1,4 @@
-import fs from 'fs';
+import { promises as fs } from 'fs';
 import path from 'path';
 import { marked } from 'marked';
 import { outro, spinner } from '@clack/prompts';
@@ -11,11 +11,40 @@ import { generatorComponentPrompt } from './prompt';
 import { validateFileName, validatePath } from '@/utils';
 import { UserSelection } from '@/types';
 import { ollamaServer } from '@/utils/ollamaServer';
+import { CHAT_OPTIONS } from '@/utils/constants';
 
 interface CodeBlocks {
   [key: string]: string[];
 }
+async function createComponentDirectory(outputDir: string) {
+  try {
+    await fs.mkdir(outputDir, { recursive: true });
+  } catch (error) {
+    if (error instanceof Error) {
+      throw new Error(`Error creating directory: ${error.message}`);
+    } else {
+      throw new Error(`Error creating directory`);
+    }
+  }
+}
 
+async function writeComponentFiles(outputDir: string, result: CodeBlocks, cssOption: string) {
+  try {
+    for (const [key, value] of Object.entries(result)) {
+      const ext = ['css', 'less', 'scss'].includes(key)
+        ? `index.module.${cssOption || 'css'}`
+        : 'index.tsx';
+      const filePath = path.join(outputDir, ext);
+      await fs.writeFile(filePath, value.join('\n\n'), 'utf8');
+    }
+  } catch (error) {
+    if (error instanceof Error) {
+      throw new Error(`Error creating directory: ${error.message}`);
+    } else {
+      throw new Error(`Error creating directory`);
+    }
+  }
+}
 export default async function createComponents({
   componentName,
   componentPath,
@@ -35,8 +64,8 @@ export default async function createComponents({
 
     const prompts = generatorComponentPrompt(input);
 
-    const s = spinner();
-    s.start('AI is generating components for you');
+    const promptsSpinner = spinner();
+    promptsSpinner.start('AI is generating components for you');
 
     const model = (await getConfig('OLLAMA_MODEL')) as string;
     const data = {
@@ -51,13 +80,7 @@ export default async function createComponents({
           content: prompts,
         },
       ],
-      options: {
-        top_p: 0.9, // 提高文本的多样性
-        temperature: 0.6, // 降低温度以增加结果的确定性
-        num_predict: 256, // 增加预测的最大token数量，以确保生成完整代码
-        repeat_penalty: 1.2, // 提高重复惩罚以减少重复内容
-        top_k: 50, // 适度降低top_k值以减少无关内容
-      },
+      options: CHAT_OPTIONS,
     };
     const ollama = await ollamaServer();
     const res = await ollama.chat(data);
@@ -79,22 +102,9 @@ export default async function createComponents({
 
     const finalComponentPath = componentPath ? `./src/${componentPath}` : './src/components';
     const outputDir = path.join(process.cwd(), finalComponentPath, componentName);
-
-    if (!fs.existsSync(outputDir)) {
-      fs.mkdirSync(outputDir, { recursive: true });
-    }
-
-    for (const [key, value] of Object.entries(result)) {
-      if (['css', 'less', 'scss'].includes(key)) {
-        const filePath = path.join(outputDir, `index.module.${input.cssOption || 'css'}`);
-        fs.writeFileSync(filePath, value.join('\n\n'), 'utf8');
-      } else {
-        const filePath = path.join(outputDir, `index.tsx`);
-        fs.writeFileSync(filePath, value.join('\n\n'), 'utf8');
-      }
-    }
-
-    s.stop();
+    await createComponentDirectory(outputDir);
+    await writeComponentFiles(outputDir, result, input.cssOption);
+    promptsSpinner.stop();
     outro('Component creation complete 🎉🎉🎉');
   } catch (error) {
     console.error('Error creating component:', error);

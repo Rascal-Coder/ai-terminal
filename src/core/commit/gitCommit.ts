@@ -1,6 +1,6 @@
 import { cancel, confirm, note, outro, text } from '@clack/prompts';
 
-import { autoCommit, remindCommiting } from '@/utils';
+import { autoCommit, oraSpinner } from '@/utils';
 
 async function selectAIMsgOrManualMsg(msg: string) {
   const code = await autoCommit(msg);
@@ -19,17 +19,21 @@ export default async (aiCommitMsg: string) => {
     inactive: '不满意',
   });
   if (answer) {
-    remindCommiting();
+    const initSpinner = oraSpinner('正在提交...');
+    initSpinner.start();
     await selectAIMsgOrManualMsg(aiCommitMsg);
+    initSpinner.stop();
   } else {
     // 让用户自己手动输入提交信息再提交
     const manualMsg = await text({
       message: '请您手动输入需要的commit信息',
       placeholder: 'commit信息',
     });
-    remindCommiting();
+    const initSpinner = oraSpinner('正在提交...');
+    initSpinner.start();
     if (typeof manualMsg === 'string' && manualMsg) {
       await selectAIMsgOrManualMsg(manualMsg as string);
+      initSpinner.stop();
     }
   }
 };
