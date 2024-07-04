@@ -25,9 +25,20 @@
     "remove-husky": "npm pkg delete scripts.postinstall"
   },
   "keywords": [
-    "ai', 'terminal"
+    "ai",
+    "ollama",
+    "chat",
+    "cli"
   ],
-  "author": "Rascal-Coder",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Rascal-Coder/ai-terminal.git"
+  },
+  "author": {
+		"name": "Rascal-Coder",
+		"email": "menoqiqio@gmail.com",
+		"url": "https://github.com/Rascal-Coder"
+	},
   "license": "MIT",
   "devDependencies": {
     "@rollup/plugin-commonjs": "^26.0.1",
