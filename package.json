@@ -1,6 +1,6 @@
 {
   "name": "@rascaljs/ai-cli",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "",
   "main": "index.js",
   "type": "module",
@@ -35,10 +35,10 @@
     "url": "https://github.com/Rascal-Coder/ai-terminal.git"
   },
   "author": {
-		"name": "Rascal-Coder",
-		"email": "menoqiqio@gmail.com",
-		"url": "https://github.com/Rascal-Coder"
-	},
+    "name": "Rascal-Coder",
+    "email": "menoqiqio@gmail.com",
+    "url": "https://github.com/Rascal-Coder"
+  },
   "license": "MIT",
   "devDependencies": {
     "@rollup/plugin-commonjs": "^26.0.1",
