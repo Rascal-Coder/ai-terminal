@@ -8,7 +8,9 @@
     "ai": "./dist/index.js"
   },
   "files": [
-    "dist/**/*"
+    "dist/**/*",
+    "README.md",
+    "ai-terminal.drawio.png"
   ],
   "scripts": {
     "build": "rollup -c",
