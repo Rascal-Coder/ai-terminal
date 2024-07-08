@@ -1,4 +1,4 @@
-import { promises as fs } from 'fs';
+import { promises as fs } from 'node:fs';
 import { intro, outro, spinner } from '@clack/prompts';
 import path from 'node:path';
 import chalk from 'chalk';
