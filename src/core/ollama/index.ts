@@ -1,9 +1,8 @@
-import { exec, execSync } from 'child_process';
-import { promisify } from 'util';
+import { exec, execSync, spawn } from 'node:child_process';
+import { promisify } from 'node:util';
 import { confirm } from '@clack/prompts';
-import { spawn } from 'child_process';
 import path from 'node:path';
-import fs from 'fs';
+import fs from 'node:fs';
 
 import { setConfig } from '@/core/config';
 import { openBrowser, currentPlatform, oraSpinner, log } from '@/utils';

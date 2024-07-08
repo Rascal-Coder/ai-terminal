@@ -1,7 +1,7 @@
-import { execSync, spawn } from 'child_process';
+import { execSync, spawn } from 'node:child_process';
 import os from 'node:os';
 import path from 'node:path';
-import { promises as fs } from 'fs';
+import { promises as fs } from 'node:fs';
 
 import { Staged } from '@/types';
 /**

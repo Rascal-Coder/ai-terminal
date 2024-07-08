@@ -1,5 +1,5 @@
 import * as cheerio from 'cheerio';
-import { promises as fs } from 'fs';
+import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
 import { ModelResponse } from 'ollama';
